@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine
 from models import Base, EnglishSpanish
-
+from datetime import datetime
 
 app = FastAPI()
 # set up the middleware 
@@ -25,7 +25,8 @@ app.add_middleware(
 )
 
 # setup the pydantic
-## this is the information that comes from the APP for validations.
+## this is the information that comes from the APP.
+## not need to date and index. this is calculated in the server.
 class WordsBase(BaseModel):
     english: str
     spanish: str
@@ -51,7 +52,9 @@ Base.metadata.create_all(bind=engine)
 # Endpoints
 @app.post("/api/words", response_model=WordsModel)
 async def create_words(words: WordsBase, db: db_dependency):
-    db_words = EnglishSpanish(**words.model_dump())
+    word = words.model_dump()
+    word['date']=str(datetime.now())
+    db_words = EnglishSpanish(**word)
     db.add(db_words)
     db.commit()
     db.refresh(db_words)
